@@ -25,7 +25,7 @@ export function isValidSongFile(rawFileName = '') {
   }
 
   // Escludi estensioni di sistema / cloud ghost
-  if (name.endsWith('.icloud') || name.endsWith('.tmp') || name.toLowerCase() === 'desktop.ini') {
+  if (name.endsWith('.icloud') || name.endsWith('.tmp') || name.toLowerCase() === 'desktop.ini' || name.endsWith('.db')) {
     return false;
   }
 
@@ -44,7 +44,7 @@ export function cleanSongTitle(rawFileName = '') {
   let name = decodeHtmlEntities(rawFileName);
 
   // Rimuovi estensione file
-  name = name.replace(/\.(pdf|docx?|pptx?|key|mp3|m4a|wav|odt|pages|xls)$/i, '');
+  name = name.replace(/\.(pdf|docx?|pptx?|ppsx?|key|mp3|m4a|wav|wma|aif|mid|odt|pages|xls|jpe?g|png|webp|gif|bmp|jfif|gdoc)$/i, '');
 
   // Rimuovi prefissi di sistema o temporanei
   name = name.replace(/^[._~$@!#\-+()\[\]\'"&]+/, '');
@@ -114,10 +114,11 @@ export function getGroupingKey(rawFileName = '') {
  */
 export function getFileType(fileName = '') {
   const ext = fileName.split('.').pop()?.toLowerCase() || '';
-  if (['mp3', 'm4a', 'wav', 'ogg', 'aac'].includes(ext)) return 'audio';
+  if (['mp3', 'm4a', 'wav', 'wma', 'aif', 'mid', 'ogg', 'aac'].includes(ext)) return 'audio';
   if (['pdf'].includes(ext)) return 'pdf';
-  if (['doc', 'docx', 'odt', 'pages', 'txt', 'rtf'].includes(ext)) return 'doc';
-  if (['ppt', 'pptx', 'key'].includes(ext)) return 'slides';
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'jfif'].includes(ext)) return 'image';
+  if (['doc', 'docx', 'odt', 'pages', 'txt', 'rtf', 'gdoc'].includes(ext)) return 'doc';
+  if (['ppt', 'pptx', 'pps', 'ppsx', 'key'].includes(ext)) return 'slides';
   return 'other';
 }
 
@@ -140,7 +141,6 @@ export function groupFilesIntoSongs(rawFiles = [], customTags = {}) {
     const fileType = getFileType(file.name);
 
     if (!songMap.has(groupKey)) {
-      // Estrai lettera iniziale: garantisci che sia da A a Z
       const firstLetterNorm = cleanedTitle.charAt(0).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const letter = /^[A-Z]$/.test(firstLetterNorm) ? firstLetterNorm : 'A';
       const detectedCat = customTags[groupKey] || detectLiturgicalCategory(cleanedTitle);
@@ -152,10 +152,12 @@ export function groupFilesIntoSongs(rawFiles = [], customTags = {}) {
         category: detectedCat,
         files: [],
         scores: [],
+        images: [],
         audio: [],
         slides: [],
         hasPdf: false,
         hasDoc: false,
+        hasImage: false,
         hasMp3: false,
         hasPpt: false,
         hasOther: false
@@ -177,6 +179,11 @@ export function groupFilesIntoSongs(rawFiles = [], customTags = {}) {
     } else if (fileType === 'doc') {
       song.scores.push(enrichedFile);
       song.hasDoc = true;
+    } else if (fileType === 'image') {
+      song.images.push(enrichedFile);
+      song.hasImage = true;
+      // Tratta anche come spartito visivo
+      song.scores.push(enrichedFile);
     } else if (fileType === 'audio') {
       song.audio.push(enrichedFile);
       song.hasMp3 = true;

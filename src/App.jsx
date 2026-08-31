@@ -57,7 +57,8 @@ export default function App() {
     audio: false,
     pdf: false,
     doc: false,
-    ppt: false
+    ppt: false,
+    image: false
   });
   const [sortBy, setSortBy] = useState('title_asc');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -148,6 +149,7 @@ export default function App() {
       if (mediaFilters.pdf && !song.hasPdf) return false;
       if (mediaFilters.doc && !song.hasDoc) return false;
       if (mediaFilters.ppt && !song.hasPpt) return false;
+      if (mediaFilters.image && !song.hasImage) return false;
 
       // 5. Filtro Preferiti
       if (showFavoritesOnly && !favoriteSongIds.includes(song.id)) return false;
@@ -294,7 +296,7 @@ export default function App() {
     setSearchTerm('');
     setSelectedLetter('ALL');
     setSelectedCategory('all');
-    setMediaFilters({ audio: false, pdf: false, doc: false, ppt: false });
+    setMediaFilters({ audio: false, pdf: false, doc: false, ppt: false, image: false });
     setShowFavoritesOnly(false);
   };
 
@@ -306,6 +308,7 @@ export default function App() {
     mediaFilters.pdf || 
     mediaFilters.doc || 
     mediaFilters.ppt ||
+    mediaFilters.image ||
     showFavoritesOnly
   );
 

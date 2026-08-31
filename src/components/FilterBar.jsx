@@ -160,6 +160,18 @@ export function FilterBar({
             <Presentation className="w-3.5 h-3.5 text-amber-500" />
             <span>Slide PPT</span>
           </button>
+
+          <button
+            onClick={() => toggleMediaFilter('image')}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all ${
+              mediaFilters.image
+                ? 'bg-purple-50 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 font-semibold'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+            <span>Foto / JPG</span>
+          </button>
         </div>
 
         {/* Ordinamento e Reset */}
