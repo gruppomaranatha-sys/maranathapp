@@ -13,8 +13,15 @@ const STORAGE_KEYS = {
  * Ottiene URL per lo streaming audio diretto da Google Drive
  */
 export function getAudioStreamUrl(fileId) {
-  // Google Drive direct download URL acts as direct audio stream
+  return `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+}
+
+export function getAudioFallbackUrl(fileId) {
   return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+export function getAudioPreviewUrl(fileId) {
+  return `https://drive.google.com/file/d/${fileId}/preview`;
 }
 
 /**
