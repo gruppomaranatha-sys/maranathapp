@@ -16,7 +16,11 @@ import {
   getAppSettings,
   saveAppSettings,
   syncFromAppsScript,
-  syncFromDriveApi
+  syncFromDriveApi,
+  CURRENT_CATALOG_VERSION,
+  getCatalogVersion,
+  saveCatalogVersion,
+  clearCatalogSync
 } from './services/driveService';
 
 import { Header } from './components/Header';
@@ -36,28 +40,19 @@ export default function App() {
     const cached = loadCatalogFromStorage();
     if (!cached || !Array.isArray(cached) || cached.length === 0) {
       saveCatalogToStorage(initialCatalog);
+      saveCatalogVersion(CURRENT_CATALOG_VERSION);
       return initialCatalog;
     }
 
-    // Unione intelligente: integra automaticamente ogni nuovo file o titolo aggiornato da initialCatalog
-    const cachedMap = new Map(cached.map(f => [f.id, f]));
-    let hasChanges = false;
+    const lastSync = localStorage.getItem('coro_app_last_sync');
+    const storedVersion = getCatalogVersion();
 
-    for (const item of initialCatalog) {
-      const existing = cachedMap.get(item.id);
-      if (!existing) {
-        cachedMap.set(item.id, item);
-        hasChanges = true;
-      } else if (existing.name !== item.name) {
-        cachedMap.set(item.id, { ...existing, name: item.name });
-        hasChanges = true;
-      }
-    }
-
-    if (hasChanges) {
-      const merged = Array.from(cachedMap.values());
-      saveCatalogToStorage(merged);
-      return merged;
+    // Se l'utente non ha mai sincronizzato da Google Drive o se la versione del catalogo bundle è cambiata,
+    // usa la versione aggiornata di initialCatalog garantendo che cancellazioni e rinomine vengano recepite
+    if (!lastSync || storedVersion !== CURRENT_CATALOG_VERSION) {
+      saveCatalogToStorage(initialCatalog);
+      saveCatalogVersion(CURRENT_CATALOG_VERSION);
+      return initialCatalog;
     }
 
     return cached;
@@ -112,17 +107,6 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
-
-  // Sincronizzazione automatica se il bundle distribuito include nuovi canti
-  useEffect(() => {
-    const currentIds = new Set(files.map(f => f.id));
-    const missing = initialCatalog.filter(f => !currentIds.has(f.id));
-    if (missing.length > 0) {
-      const updated = [...files, ...missing];
-      setFiles(updated);
-      saveCatalogToStorage(updated);
-    }
-  }, [files]);
 
   // Raggruppamento dei file in canti unificati
   const allSongs = useMemo(() => {
@@ -293,6 +277,7 @@ export default function App() {
     try {
       const newFiles = await syncFromAppsScript(url);
       setFiles(newFiles);
+      saveCatalogVersion(CURRENT_CATALOG_VERSION);
       setLastSyncDate(new Date().toISOString());
     } finally {
       setIsSyncing(false);
@@ -305,6 +290,7 @@ export default function App() {
     try {
       const newFiles = await syncFromDriveApi(key);
       setFiles(newFiles);
+      saveCatalogVersion(CURRENT_CATALOG_VERSION);
       setLastSyncDate(new Date().toISOString());
     } finally {
       setIsSyncing(false);
@@ -315,6 +301,8 @@ export default function App() {
   const handleResetToDefaultCatalog = () => {
     if (window.confirm('Sei sicuro di voler ripristinare il catalogo iniziale?')) {
       saveCatalogToStorage(initialCatalog);
+      saveCatalogVersion(CURRENT_CATALOG_VERSION);
+      clearCatalogSync();
       setFiles(initialCatalog);
       setLastSyncDate(null);
     }

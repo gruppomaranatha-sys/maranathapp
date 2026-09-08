@@ -6,8 +6,11 @@ const STORAGE_KEYS = {
   SCALETTE: 'coro_app_scalette',
   FAVORITES: 'coro_app_favorites',
   SETTINGS: 'coro_app_settings',
-  LAST_SYNC: 'coro_app_last_sync'
+  LAST_SYNC: 'coro_app_last_sync',
+  CATALOG_VERSION: 'coro_app_catalog_version'
 };
+
+export const CURRENT_CATALOG_VERSION = '2026.09.08.2';
 
 /**
  * Ottiene URL per lo streaming audio diretto da Google Drive
@@ -166,6 +169,37 @@ export function loadCatalogFromStorage() {
     console.error('Failed to load cached catalog', e);
     return null;
   }
+}
+
+/**
+ * Ottiene la versione del catalogo salvata in localStorage
+ */
+export function getCatalogVersion() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.CATALOG_VERSION);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Salva la versione del catalogo in localStorage
+ */
+export function saveCatalogVersion(version) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.CATALOG_VERSION, version);
+  } catch (e) {
+    console.error('Failed to save catalog version', e);
+  }
+}
+
+/**
+ * Rimuove il timestamp di sincronizzazione (per ripristinare il catalogo iniziale)
+ */
+export function clearCatalogSync() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.LAST_SYNC);
+  } catch (e) {}
 }
 
 /**

@@ -61,6 +61,9 @@ export function cleanSongTitle(rawFileName = '') {
   // Rimuovi parentesi con autori o versioni secondarie per il titolo principale ma mantienile se utili
   name = name.replace(/\s*\((Fabio Baggio|Gen Rosso|Gen Verde|Dall'Amore di Dio|Gen|Marco Frisina|Frisina|RnS|Kiko|H\.J\. Botor|parisi|W\. Dalla vecchia|Machetta|Lècot-irlandese|Spol)[^)]*\)/gi, '');
 
+  // Rimuovi suffissi di duplicazione come (1), (2), (copia) tipici dei download/upload Google Drive
+  name = name.replace(/\s*\((?:\d+|copia)\)$/i, '');
+
   // Pulisci doppi spazi e trim
   name = name.replace(/\s+/g, ' ').trim();
 
