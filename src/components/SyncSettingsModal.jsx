@@ -73,20 +73,11 @@ export function SyncSettingsModal({
     var allFiles = [];
     for (var key in FOLDERS) {
       var folderInfo = FOLDERS[key];
-      var folder = DriveApp.getFolderById(folderInfo.id);
-      var files = folder.getFiles();
-      while (files.hasNext()) {
-        var file = files.next();
-        if (file.getName().indexOf('~$') === 0) continue;
-        allFiles.push({
-          id: file.getId(),
-          name: file.getName(),
-          mimeType: file.getMimeType(),
-          size: file.getSize(),
-          folder_key: key,
-          folder_name: folderInfo.name,
-          category: folderInfo.type
-        });
+      try {
+        var folder = DriveApp.getFolderById(folderInfo.id);
+        scanFolderRecursively(folder, folderInfo, key, allFiles);
+      } catch (err) {
+        Logger.log('Errore: ' + err.toString());
       }
     }
     return ContentService.createTextOutput(JSON.stringify(allFiles))
@@ -94,6 +85,27 @@ export function SyncSettingsModal({
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function scanFolderRecursively(folder, folderInfo, folderKey, results) {
+  var files = folder.getFiles();
+  while (files.hasNext()) {
+    var file = files.next();
+    if (file.getName().indexOf('~$') === 0) continue;
+    results.push({
+      id: file.getId(),
+      name: file.getName(),
+      mimeType: file.getMimeType(),
+      size: file.getSize(),
+      folder_key: folderKey,
+      folder_name: folderInfo.name,
+      category: folderInfo.type
+    });
+  }
+  var subfolders = folder.getFolders();
+  while (subfolders.hasNext()) {
+    scanFolderRecursively(subfolders.next(), folderInfo, folderKey, results);
   }
 }`;
 
