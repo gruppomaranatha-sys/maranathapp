@@ -34,12 +34,33 @@ export default function App() {
   // Stato File & Catalogo
   const [files, setFiles] = useState(() => {
     const cached = loadCatalogFromStorage();
-    if (cached && cached.length > 500) {
-      return cached;
+    if (!cached || !Array.isArray(cached) || cached.length === 0) {
+      saveCatalogToStorage(initialCatalog);
+      return initialCatalog;
     }
-    // Se la cache precedente era la versione ridotta da 200, aggiorna al catalogo completo
-    saveCatalogToStorage(initialCatalog);
-    return initialCatalog;
+
+    // Unione intelligente: integra automaticamente ogni nuovo file o titolo aggiornato da initialCatalog
+    const cachedMap = new Map(cached.map(f => [f.id, f]));
+    let hasChanges = false;
+
+    for (const item of initialCatalog) {
+      const existing = cachedMap.get(item.id);
+      if (!existing) {
+        cachedMap.set(item.id, item);
+        hasChanges = true;
+      } else if (existing.name !== item.name) {
+        cachedMap.set(item.id, { ...existing, name: item.name });
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      const merged = Array.from(cachedMap.values());
+      saveCatalogToStorage(merged);
+      return merged;
+    }
+
+    return cached;
   });
 
   const [customTags, setCustomTags] = useState(() => getCustomTags());
@@ -91,6 +112,17 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  // Sincronizzazione automatica se il bundle distribuito include nuovi canti
+  useEffect(() => {
+    const currentIds = new Set(files.map(f => f.id));
+    const missing = initialCatalog.filter(f => !currentIds.has(f.id));
+    if (missing.length > 0) {
+      const updated = [...files, ...missing];
+      setFiles(updated);
+      saveCatalogToStorage(updated);
+    }
+  }, [files]);
 
   // Raggruppamento dei file in canti unificati
   const allSongs = useMemo(() => {

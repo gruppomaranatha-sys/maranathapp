@@ -55,8 +55,8 @@ export function cleanSongTitle(rawFileName = '') {
   // Rimuovi ulteriori simboli rimasti all'inizio
   name = name.replace(/^[._~$@!#\-+()\[\]\'"&]+/, '');
 
-  // Rimuovi indicazioni di accordi o tonalità comuni alla fine: " Fa", " in MI", " accordi", " spartito", " testo"
-  name = name.replace(/\s+(in\s+[A-Za-z#b]+|Fa|Sol|La|Si|Do|Re|Mi|accordi|spartito|testo|chords|latin|rit)$/i, '');
+  // Rimuovi indicazioni di accordi o tonalità comuni alla fine (con spazio, trattino o underscore): " Fa", "-Spartito", " accordi", " spartito", " testo"
+  name = name.replace(/[\s\-_]+(in\s+[A-Za-z#b]+|Fa|Sol|La|Si|Do|Re|Mi|accordi|spartito|spartiti|testo|chords|latin|rit)$/i, '');
 
   // Rimuovi parentesi con autori o versioni secondarie per il titolo principale ma mantienile se utili
   name = name.replace(/\s*\((Fabio Baggio|Gen Rosso|Gen Verde|Dall'Amore di Dio|Gen|Marco Frisina|Frisina|RnS|Kiko|H\.J\. Botor|parisi|W\. Dalla vecchia|Machetta|Lècot-irlandese|Spol)[^)]*\)/gi, '');
