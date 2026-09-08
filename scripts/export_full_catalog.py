@@ -75,7 +75,7 @@ for s_id, f_info in folder_map.items():
 
 conn.close()
 
-output_path = r"c:\Users\Utente10\Desktop\App Inoxtubi\Canti\src\data\initialCatalog.json"
+output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "initialCatalog.json"))
 with open(output_path, "w", encoding="utf-8") as f:
     json.dump(all_files, f, ensure_ascii=False, indent=2)
 

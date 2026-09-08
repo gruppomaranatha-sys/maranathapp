@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import urllib.request
 import re
+import html
 import json
 import os
 import sys
@@ -16,61 +17,129 @@ folders = {
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
-all_files = []
-seen_ids = set()
+file_pattern = re.compile(
+    r'<a\s+href="https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)/view\?usp=drive_web"[^>]*>.*?'
+    r'<div\s+class="flip-entry-title">([^<]+)</div>',
+    re.DOTALL
+)
 
-for key, f_info in folders.items():
-    fid = f_info['id']
-    url = f'https://drive.google.com/drive/folders/{fid}'
+folder_pattern = re.compile(
+    r'<a\s+href="https://drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)"[^>]*>.*?'
+    r'<div\s+class="flip-entry-title">([^<]+)</div>',
+    re.DOTALL
+)
+
+def get_mime_type(filename):
+    ext = filename.split('.')[-1].lower() if '.' in filename else ''
+    if ext == 'mp3':
+        return 'audio/mpeg'
+    elif ext == 'pdf':
+        return 'application/pdf'
+    elif ext in ['doc', 'docx']:
+        return 'application/msword'
+    elif ext in ['ppt', 'pptx']:
+        return 'application/vnd.ms-powerpoint'
+    elif ext == 'key':
+        return 'application/x-iwork-keynote-sffkey'
+    elif ext in ['jpg', 'jpeg']:
+        return 'image/jpeg'
+    elif ext == 'png':
+        return 'image/png'
+    return 'application/octet-stream'
+
+def fetch_folder_recursive(folder_id, folder_key, folder_name, folder_type, seen_ids, visited=None):
+    if visited is None:
+        visited = set()
+    if folder_id in visited:
+        return []
+    visited.add(folder_id)
+
+    url = f"https://drive.google.com/embeddedfolderview?id={folder_id}#list"
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req) as resp:
-            html = resp.read().decode('utf-8')
-            
-            # Pattern 1: data-id="..." ... <strong class="DNoYtb">...</strong>
-            matches1 = re.finditer(r'data-id="(?P<id>[a-zA-Z0-9_-]{20,50})"[^>]*>.*?<strong[^>]*>(?P<name>[^<]+)</strong>', html, re.DOTALL)
-            count = 0
-            for m in matches1:
-                file_id = m.group('id')
-                file_name = m.group('name').strip()
-                if file_id not in seen_ids and file_name:
-                    seen_ids.add(file_id)
-                    all_files.append({
-                        'id': file_id,
-                        'name': file_name,
-                        'folder_key': key,
-                        'folder_name': f_info['name'],
-                        'category': f_info['type'],
-                        'mimeType': 'audio/mpeg' if file_name.endswith('.mp3') else ('application/pdf' if file_name.endswith('.pdf') else 'application/octet-stream')
-                    })
-                    count += 1
-
-            # Pattern 2: aria-label="([^"]+)" ... data-id="([a-zA-Z0-9_-]+)"
-            matches2 = re.finditer(r'aria-label="(?P<name>[^"]+?)\s+(?:Microsoft Word|PDF|Audio|Keynote|Presentation|Document|Shared)[^"]*"\s+data-handled-by-drag-and-drop="true"[^>]*>.*?data-id="(?P<id>[a-zA-Z0-9_-]{20,50})"', html, re.DOTALL)
-            for m in matches2:
-                file_id = m.group('id')
-                file_name = m.group('name').strip()
-                if file_id not in seen_ids and file_name:
-                    seen_ids.add(file_id)
-                    all_files.append({
-                        'id': file_id,
-                        'name': file_name,
-                        'folder_key': key,
-                        'folder_name': f_info['name'],
-                        'category': f_info['type'],
-                        'mimeType': 'audio/mpeg' if file_name.endswith('.mp3') else ('application/pdf' if file_name.endswith('.pdf') else 'application/octet-stream')
-                    })
-                    count += 1
-
-            print(f"Extracted {count} files for {f_info['name']}")
+            content = resp.read().decode('utf-8', errors='ignore')
     except Exception as e:
-        print(f"Error fetching {key}: {e}")
+        print(f"Error fetching {folder_id} ({folder_name}): {e}")
+        return []
 
-output_dir = r"c:\Users\Utente10\Desktop\App Inoxtubi\Canti\src\data"
-os.makedirs(output_dir, exist_ok=True)
-output_path = os.path.join(output_dir, "initialCatalog.json")
+    results = []
+    for fid, name in file_pattern.findall(content):
+        name = html.unescape(name.strip())
+        if name.startswith('~$') or name == 'desktop.ini':
+            continue
+        if fid not in seen_ids:
+            seen_ids.add(fid)
+            results.append({
+                'id': fid,
+                'name': name,
+                'mimeType': get_mime_type(name),
+                'folder_key': folder_key,
+                'folder_name': folder_name,
+                'category': folder_type
+            })
 
-with open(output_path, "w", encoding="utf-8") as f:
-    json.dump(all_files, f, ensure_ascii=False, indent=2)
+    # Recurse into subfolders for MP3, A-L, M-Z
+    if folder_key in ['canti_mp3', 'testi_A_L', 'testi_M_Z']:
+        for sub_id, sub_name in folder_pattern.findall(content):
+            sub_name = html.unescape(sub_name.strip())
+            print(f"  Recursing into: {sub_name}")
+            results.extend(fetch_folder_recursive(sub_id, folder_key, folder_name, folder_type, seen_ids, visited))
 
-print(f"Total files saved to {output_path}: {len(all_files)}")
+    return results
+
+def run_sync():
+    catalog_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "initialCatalog.json"))
+    existing_catalog = []
+    if os.path.exists(catalog_path):
+        with open(catalog_path, 'r', encoding='utf-8') as f:
+            existing_catalog = json.load(f)
+
+    existing_by_id = {item['id']: item for item in existing_catalog}
+    print(f"Current initialCatalog items: {len(existing_catalog)}")
+
+    web_items = []
+    seen_ids = set()
+
+    for key in ['testi_A_L', 'testi_M_Z', 'canti_mp3']:
+        finfo = folders[key]
+        print(f"\nSincronizzazione cartella '{finfo['name']}' da Google Drive Web...")
+        items = fetch_folder_recursive(finfo['id'], key, finfo['name'], finfo['type'], seen_ids)
+        print(f"  Trovati {len(items)} file in {finfo['name']}")
+        web_items.extend(items)
+
+    # PPT items preservation
+    ppt_items = [item for item in existing_catalog if item.get('folder_key') == 'proiezioni_ppt']
+    print(f"\nConservati {len(ppt_items)} file PPT dal catalogo esistente")
+
+    new_items_count = 0
+    updated_items_count = 0
+    merged_catalog = []
+
+    for item in web_items:
+        fid = item['id']
+        if fid in existing_by_id:
+            prev = existing_by_id[fid]
+            item['size'] = prev.get('size', 0)
+            if '.' not in item['name'] and '.' in prev['name']:
+                item['name'] = prev['name']
+                item['mimeType'] = prev['mimeType']
+            if prev['name'] != item['name']:
+                print(f"  ~ Nome aggiornato: '{prev['name']}' -> '{item['name']}'")
+                updated_items_count += 1
+        else:
+            item['size'] = 0
+            print(f"  + NUOVO FILE AGGIUNTO: {item['name']} ({item['id']})")
+            new_items_count += 1
+        merged_catalog.append(item)
+
+    merged_catalog.extend(ppt_items)
+
+    with open(catalog_path, 'w', encoding='utf-8') as f:
+        json.dump(merged_catalog, f, ensure_ascii=False, indent=2)
+
+    print(f"\n✅ Catalogo aggiornato con successo in {catalog_path}!")
+    print(f"  Totale file: {len(merged_catalog)} (Nuovi: {new_items_count}, Modificati: {updated_items_count})")
+
+if __name__ == '__main__':
+    run_sync()
