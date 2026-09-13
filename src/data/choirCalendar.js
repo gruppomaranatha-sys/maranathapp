@@ -93,9 +93,9 @@ export const CHOIR_DODECALOGO = [
 
 export const CHOIR_CALENDAR_EVENTS = [
   {
-    id: 'cal-2026-10-18',
-    isoDate: '2026-10-18T15:30:00',
-    dateDisplay: 'Ven. 18/10/2026',
+    id: 'cal-2026-09-18',
+    isoDate: '2026-09-18T15:30:00',
+    dateDisplay: 'Ven. 18/09/2026',
     time: '15:30',
     title: 'Matrim. Martina & Tommaso',
     category: 'wedding',
@@ -104,9 +104,9 @@ export const CHOIR_CALENDAR_EVENTS = [
     note: ''
   },
   {
-    id: 'cal-2026-10-19',
-    isoDate: '2026-10-19T15:30:00',
-    dateDisplay: 'Sab. 19/10/2026',
+    id: 'cal-2026-09-19',
+    isoDate: '2026-09-19T15:30:00',
+    dateDisplay: 'Sab. 19/09/2026',
     time: '15:30',
     title: 'Matrim. Giorgia & Gianluca',
     category: 'wedding',
