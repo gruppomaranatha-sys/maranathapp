@@ -33,6 +33,8 @@ import { LivePerformanceMode } from './components/LivePerformanceMode';
 import { SyncSettingsModal } from './components/SyncSettingsModal';
 import { RawFilesExplorer } from './components/RawFilesExplorer';
 import { TagEditorModal } from './components/TagEditorModal';
+import { CalendarView } from './components/CalendarView';
+import { UpcomingEventsBanner } from './components/UpcomingEventsBanner';
 
 export default function App() {
   // Stato File & Catalogo
@@ -271,6 +273,37 @@ export default function App() {
     }
   };
 
+  // Creazione rapida di una scaletta da un evento del calendario
+  const handleCreateScalettaFromEvent = (event) => {
+    const existing = scalette.find(s => s.date === event.isoDate.split('T')[0] || s.name.includes(event.title));
+    if (existing) {
+      setActiveScalettaId(existing.id);
+      setIsScalettaOpen(true);
+      return;
+    }
+
+    const newScaletta = {
+      id: `scaletta_${event.id}_${Date.now()}`,
+      name: `${event.title} (${event.dateDisplay.split(' ')[1] || event.dateDisplay})`,
+      date: event.isoDate.split('T')[0],
+      items: [
+        { moment: 'ingresso', label: "Canto d'Ingresso", songId: '', songTitle: '' },
+        { moment: 'kyrie_gloria', label: "Gloria / Kyrie", songId: '', songTitle: '' },
+        { moment: 'salmo_alleluia', label: "Salmo / Alleluia", songId: '', songTitle: '' },
+        { moment: 'offertorio', label: "Offertorio", songId: '', songTitle: '' },
+        { moment: 'santo', label: "Santo", songId: '', songTitle: '' },
+        { moment: 'pace', label: "Pace / Agnello di Dio", songId: '', songTitle: '' },
+        { moment: 'comunione', label: "Comunione", songId: '', songTitle: '' },
+        { moment: 'congedo', label: "Canto Finale", songId: '', songTitle: '' }
+      ]
+    };
+
+    const updated = [newScaletta, ...scalette];
+    handleSaveScalette(updated);
+    setActiveScalettaId(newScaletta.id);
+    setIsScalettaOpen(true);
+  };
+
   // Sincronizzazione Apps Script
   const handleSyncAppsScript = async (url) => {
     setIsSyncing(true);
@@ -360,6 +393,12 @@ export default function App() {
         
         {activeTab === 'songs' ? (
           <>
+            {/* Banner Prossimi Impegni del Coro */}
+            <UpcomingEventsBanner
+              onOpenCalendar={() => setActiveTab('calendar')}
+              onCreateScaletta={handleCreateScalettaFromEvent}
+            />
+
             {/* Barra dei Filtri */}
             <FilterBar
               selectedLetter={selectedLetter}
@@ -388,6 +427,12 @@ export default function App() {
               onResetFilters={handleResetFilters}
             />
           </>
+        ) : activeTab === 'calendar' ? (
+          /* Vista Calendario & Info Coro */
+          <CalendarView
+            onCreateScalettaFromEvent={handleCreateScalettaFromEvent}
+            onBackToSongs={() => setActiveTab('songs')}
+          />
         ) : (
           /* Vista File per Cartella Drive */
           <RawFilesExplorer

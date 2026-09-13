@@ -11,7 +11,8 @@ import {
   Sun, 
   Settings, 
   RefreshCw,
-  FolderOpen
+  FolderOpen,
+  Calendar
 } from 'lucide-react';
 
 export function Header({
@@ -194,6 +195,22 @@ export function Header({
               <span className="xs:hidden">Cartelle</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300">
                 {stats.totalFiles}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                activeTab === 'calendar'
+                  ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden sm:inline">Calendario &amp; Impegni</span>
+              <span className="sm:hidden">Calendario</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300/60 dark:border-amber-700/60">
+                26/27
               </span>
             </button>
           </div>
