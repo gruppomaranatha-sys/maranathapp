@@ -60,16 +60,16 @@ export function Header({
             </div>
           </div>
 
-          {/* Barra di ricerca centrale */}
-          <div className="flex-1 max-w-md hidden md:block">
+          {/* Barra di ricerca centrale per schermi grandi (Desktop >= lg) */}
+          <div className="flex-1 max-w-lg hidden lg:block mx-2 xl:mx-4">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Cerca per titolo, categoria o testo..."
-                className="w-full pl-10 pr-10 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
+                placeholder="Cerca per titolo, momento liturgico, testo..."
+                className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
               />
               {searchTerm && (
                 <button
@@ -83,7 +83,7 @@ export function Header({
           </div>
 
           {/* Azioni di destra */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             
             {/* Pulsante Preferiti */}
             <button
@@ -139,21 +139,21 @@ export function Header({
           </div>
         </div>
 
-        {/* Ricerca per mobile (visibile solo sotto md) */}
-        <div className="pb-3 md:hidden">
+        {/* Ricerca per mobile e tablet/iPad (a tutta larghezza sotto lg) */}
+        <div className="pb-3 lg:hidden">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cerca canto, spartito, audio..."
-              className="w-full pl-9 pr-9 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="Cerca per titolo, momento liturgico, testo..."
+              className="w-full pl-10 pr-10 py-2.5 text-base sm:text-sm bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-900 transition-all shadow-2xs"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
               >
                 <X className="w-4 h-4" />
               </button>
